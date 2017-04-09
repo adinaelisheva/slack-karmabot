@@ -1,3 +1,3 @@
 # encoding: UTF-8
-require './hello-app'
+require './karmabot'
 run Sinatra::Application

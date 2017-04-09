@@ -39,15 +39,28 @@ def handleChange(text,channel)
 end
 
 def handleFetch(text,channel)
+  if(!text.start_with?("!karma "))
+    return
+  end
+  str = text[7...text.length]
+  sendMessage("You tried to find the karma of _#{str}_, but my db access isn't set up yet :(",channel)
 
 end
 
 
 post '/message' do 
   req = JSON.parse(request.body.read)
+
+  puts req
+
+  if(req["event"]["subtype"]) 
+    return
+  end
+
   channel = req["event"]["channel"]
   text = req["event"]["text"]
 
+  #testing - only use the test channel for now
   if(channel == "C4WKUSNA0")
     handleChange(text,channel)
     handleFetch(text,channel)
