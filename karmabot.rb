@@ -84,8 +84,6 @@ post '/message' do
   channel = req["event"]["channel"]
   text = req["event"]["text"]
 
-  #testing - only use the test channel for now
-  puts req
   handleChange(text,channel)
   handleFetch(text,channel)
 
