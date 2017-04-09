@@ -4,12 +4,41 @@ require 'rubygems' # for ruby 1.8
 require 'sinatra'
 require 'json'
 require 'net/http'
-require 'token'
+require 'dbi'
+require './token'
+
+$dbh = nil
+
+def fetchRowFromDB(text)
+  sth = $dbh.prepare("SELECT points FROM `we-play-board-games` WHERE thing = ?;")
+  sth.execute(text)
+  return sth.fetch() 
+end
+
+def fetchKarmaFromDB(text)
+  row = fetchRowFromDB(text)
+  if(row.nil?)
+    return 0
+  else
+    return row['points']
+  end
+end
+
+def adjustKarmaInDB(text,amt)
+  row = fetchRowFromDB(text)
+  if(row.nil?)
+     sth = $dbh.prepare( "INSERT INTO `we-play-board-games`(thing,points) VALUES (?, ?);" )
+     sth.execute(text,amt)
+  else
+     sth = $dbh.prepare("UPDATE `we-play-board-games` SET points = ? WHERE thing = ?;")
+     newpoints = row['points'] + amt
+     sth.execute(newpoints,text)
+  end
+end
 
 def sendMessage(text, channel)
-
     uri = URI('https://slack.com/api/chat.postMessage')
-    params = { :token => token, :channel => channel, :text => text }
+    params = { :token => $token, :channel => channel, :text => text }
     uri.query = URI.encode_www_form(params)
 
     https = Net::HTTP.new(uri.host,uri.port)
@@ -26,16 +55,11 @@ def handleChange(text,channel)
     return
   end
 
-  str = ""  
   matches.each do |match|
-    str += match[0]
-    str += case match[1]
-      when '++' then ' improves. '
-      when '--' then ' worsens. '
-    end
+    amt = (match[1]=='++' ? 1 : match[1]=='--' ? -1 : 0)
+    adjustKarmaInDB(match[0],amt)
   end
 
-  sendMessage(str,channel)
 end
 
 def handleFetch(text,channel)
@@ -43,8 +67,8 @@ def handleFetch(text,channel)
     return
   end
   str = text[7...text.length]
-  sendMessage("You tried to find the karma of _#{str}_, but my db access isn't set up yet :(",channel)
-
+  karma = fetchKarmaFromDB(str)
+  sendMessage("#{str} has #{karma} karma",channel)
 end
 
 
@@ -55,6 +79,8 @@ post '/message' do
     return
   end
 
+  $dbh = DBI.connect("DBI:Mysql:karma:localhost","arubinoff", $dbtoken)
+
   channel = req["event"]["channel"]
   text = req["event"]["text"]
 
@@ -64,5 +90,7 @@ post '/message' do
     handleChange(text,channel)
     handleFetch(text,channel)
   end
+
+  $dbh.disconnect()
 
 end
