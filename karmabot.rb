@@ -4,9 +4,9 @@ require 'rubygems' # for ruby 1.8
 require 'sinatra'
 require 'json'
 require 'net/http'
+require 'token'
 
 def sendMessage(text, channel)
-    token = "xoxp-18389917205-31824788208-166736239189-f9c55cc994a10d382e96acbd30eb245a"
 
     uri = URI('https://slack.com/api/chat.postMessage')
     params = { :token => token, :channel => channel, :text => text }
