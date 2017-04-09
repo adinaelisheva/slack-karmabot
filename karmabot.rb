@@ -85,11 +85,9 @@ post '/message' do
   text = req["event"]["text"]
 
   #testing - only use the test channel for now
-  if(channel == "C4WKUSNA0")
-    puts req
-    handleChange(text,channel)
-    handleFetch(text,channel)
-  end
+  puts req
+  handleChange(text,channel)
+  handleFetch(text,channel)
 
   $dbh.disconnect()
 
