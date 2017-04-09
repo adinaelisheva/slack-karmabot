@@ -6,7 +6,7 @@ require 'json'
 require 'net/http'
 
 def sendMessage(text, channel)
-    token = "xoxp-18389917205-31824788208-167317729894-68eda642b565103074c8b170aaa011cd"
+    token = "xoxp-18389917205-31824788208-166736239189-f9c55cc994a10d382e96acbd30eb245a"
 
     uri = URI('https://slack.com/api/chat.postMessage')
     params = { :token => token, :channel => channel, :text => text }
@@ -51,9 +51,7 @@ end
 post '/message' do 
   req = JSON.parse(request.body.read)
 
-  puts req
-
-  if(req["event"]["subtype"]) 
+  if(req["event"]["subtype"] || req["token"] != "L1jzs0c6I2WHhu7jfHaBR83O") 
     return
   end
 
@@ -62,6 +60,7 @@ post '/message' do
 
   #testing - only use the test channel for now
   if(channel == "C4WKUSNA0")
+    puts req
     handleChange(text,channel)
     handleFetch(text,channel)
   end
