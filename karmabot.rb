@@ -48,7 +48,7 @@ def sendMessage(text, channel)
 end
 
 def handleChange(text,channel)
-  regexp = /(\w+)(\+\+|--)/
+  regexp = /((\w+)|\(([^)]+)\))(\+\+|--)/
   matches = text.scan(regexp)
 
   if(matches.length == 0)
@@ -56,8 +56,11 @@ def handleChange(text,channel)
   end
 
   matches.each do |match|
-    amt = (match[1]=='++' ? 1 : match[1]=='--' ? -1 : 0)
-    adjustKarmaInDB(match[0],amt)
+    amt = (match[3]=='++' ? 1 : match[3]=='--' ? -1 : 0)
+    thing = match[1] ? match[1] : match[2]
+    if (amt && thing)
+      adjustKarmaInDB(thing,amt)
+    end
   end
 
   return true
@@ -67,11 +70,13 @@ def handleFetch(text,channel)
   if(!text.start_with?("!karma "))
     return false
   end
+  regexp = /((\w+)|\(([^)]+)\))/
   str = ""
-  text.split(' ').each do |word|
-    if(word == '!karma')
+  text.scan(regexp).each_with_index do |m,i|
+    if(i==0)
       next
     end
+    word = m[1] ? m[1] : m[2]
     karma = fetchKarmaFromDB(word)
     str += "#{word} has #{karma} karma. "
   end
