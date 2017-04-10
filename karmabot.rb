@@ -52,7 +52,7 @@ def handleChange(text,channel)
   matches = text.scan(regexp)
 
   if(matches.length == 0)
-    return
+    return false
   end
 
   matches.each do |match|
@@ -60,11 +60,12 @@ def handleChange(text,channel)
     adjustKarmaInDB(match[0],amt)
   end
 
+  return true
 end
 
 def handleFetch(text,channel)
   if(!text.start_with?("!karma "))
-    return
+    return false
   end
   str = ""
   text.split(' ').each do |word|
@@ -77,8 +78,10 @@ def handleFetch(text,channel)
   
   if(str != "")
     sendMessage(str,channel)
+    return true
   end
-  
+
+  return false  
 end
 
 
@@ -94,8 +97,11 @@ post '/message' do
   channel = req["event"]["channel"]
   text = req["event"]["text"]
 
-  handleChange(text,channel)
-  handleFetch(text,channel)
+  fetched = handleFetch(text,channel)
+  if (!fetched) 
+    #don't adjust karma inside a fetch
+    handleChange(text,channel)
+  end
 
   $dbh.disconnect()
 
