@@ -66,9 +66,19 @@ def handleFetch(text,channel)
   if(!text.start_with?("!karma "))
     return
   end
-  str = text[7...text.length]
-  karma = fetchKarmaFromDB(str)
-  sendMessage("#{str} has #{karma} karma",channel)
+  str = ""
+  text.split(' ').each do |word|
+    if(word == '!karma')
+      next
+    end
+    karma = fetchKarmaFromDB(word)
+    str += "#{word} has #{karma} karma. "
+  end
+  
+  if(str != "")
+    sendMessage(str,channel)
+  end
+  
 end
 
 
