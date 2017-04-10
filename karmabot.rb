@@ -85,7 +85,7 @@ end
 post '/message' do 
   req = JSON.parse(request.body.read)
 
-  if(req["event"]["subtype"] || req["token"] != "L1jzs0c6I2WHhu7jfHaBR83O") 
+  if(req["event"]["subtype"] || req["token"] != $verificationToken) 
     return
   end
 
