@@ -23,7 +23,7 @@ Not valid and won't do anything:
 #### Fetching scores
 To find out scores, just send the message `!karma` followed by any number of words or phrases in parentheses.
 
-![score fetching example](example.png)
+![score fetching example](pics/example.png)
 
 ### Setting it up on your own server
 
@@ -38,7 +38,7 @@ To find out scores, just send the message `!karma` followed by any number of wor
 2. [Create an app on your slack team(s)](https://api.slack.com/apps) called Karmabot (or whatever you want to call it!)
 3. Set up the app(s) to point to your server
 4. Give your app(s) the following permissions:  
-![channels:history and chat:write:bot](perms.png)
+![channels:history and chat:write:bot](pics/perms.png)
 5. Set up a db with tables for every slack team you're using the app on. The tables should have minimum these two columns:
    1. `thing` a text field
    2. `points` an int
