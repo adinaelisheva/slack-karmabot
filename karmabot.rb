@@ -5,12 +5,14 @@ require 'sinatra'
 require 'json'
 require 'net/http'
 require 'dbi'
-require './token'
+require './tokens'
 
 $dbh = nil
+$token = nil
+$tablename = nil
 
 def fetchRowFromDB(text)
-  sth = $dbh.prepare("SELECT points FROM `we-play-board-games` WHERE thing = ?;")
+  sth = $dbh.prepare("SELECT points FROM `#{$tablename}` WHERE thing = ?;")
   sth.execute(text)
   return sth.fetch() 
 end
@@ -27,10 +29,10 @@ end
 def adjustKarmaInDB(text,amt)
   row = fetchRowFromDB(text)
   if(row.nil?)
-     sth = $dbh.prepare( "INSERT INTO `we-play-board-games`(thing,points) VALUES (?, ?);" )
+     sth = $dbh.prepare( "INSERT INTO `#{$tablename}`(thing,points) VALUES (?, ?);" )
      sth.execute(text,amt)
   else
-     sth = $dbh.prepare("UPDATE `we-play-board-games` SET points = ? WHERE thing = ?;")
+     sth = $dbh.prepare("UPDATE `#{$tablename}` SET points = ? WHERE thing = ?;")
      newpoints = row['points'] + amt
      sth.execute(newpoints,text)
   end
@@ -93,11 +95,19 @@ end
 post '/message' do 
   req = JSON.parse(request.body.read)
 
-  if(req["event"]["subtype"] || req["token"] != $verificationToken) 
+  if(req["challenge"])
+    return req["challenge"]
+  end
+
+  verificationToken = req["token"]
+  $token = $tokenMap[verificationToken]
+
+  if(req["event"]["subtype"] || !$token) 
     return
   end
 
   $dbh = DBI.connect("DBI:Mysql:karma:localhost","arubinoff", $dbtoken)
+  $tablename = $tableMap[verificationToken]
 
   channel = req["event"]["channel"]
   text = req["event"]["text"]
