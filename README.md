@@ -41,6 +41,6 @@ To find out scores, just send the message `!karma` followed by any number of wor
 ![channels:history and chat:write:bot](permissions.png)
 5. Set up a db with tables for every slack team you're using the app on. The tables should have minimum these two columns:
    1. `thing` a text field
-   2. `score` an int
+   2. `points` an int
 6. Create a `tokens.rb` file that contains your db table names and app authentication tokens (copy tokens.rb.SAMPLE)
 7. Restart your sinatra server and you're good to go!
