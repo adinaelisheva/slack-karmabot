@@ -50,7 +50,7 @@ def sendMessage(text, channel)
 end
 
 def handleChange(text,channel)
-  regexp = /((\w+)|\(([^)]+)\))(\+\+|--)/
+  regexp = /(([^()\-+\s]+)|\(([^)]+)\))(\+\+|--)/
   matches = text.scan(regexp)
 
   if(matches.length == 0)
@@ -72,7 +72,7 @@ def handleFetch(text,channel)
   if(!text.start_with?("!karma "))
     return false
   end
-  regexp = /((\w+)|\(([^)]+)\))/
+  regexp = /(([^()\-+\s]+)|\(([^)]+)\))/
   str = ""
   text.scan(regexp).each_with_index do |m,i|
     if(i==0)
