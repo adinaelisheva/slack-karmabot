@@ -34,7 +34,10 @@ To find out scores, just send the message `!karma` followed by any number of wor
 4. [Ruby MySQL DBI](http://ruby-dbi.rubyforge.org/)
 
 #### What to do
-1. Fork this repo to your server
+1. Fork this repo to your server. The main files you need are:
+   1. The `tmp/` directory and `config.ru` for sinatra
+   2. `karmabot.rb`
+   3. `tokens.rb.SAMPLE` to copy (in step 6)
 2. [Create an app on your slack team(s)](https://api.slack.com/apps) called Karmabot (or whatever you want to call it!)
 3. Set up the app(s) to point to your server
 4. Give your app(s) the following permissions:  
