@@ -1,0 +1,21 @@
+#!/usr/bin/env ruby
+
+#Put your database info here
+$dbName = ""
+$dbUser = ""
+$dbtoken = ""
+
+#here put a list of all your app's verification codes, from all the teams you've uploaded it to
+team1Verify = ""
+team2Verify = ""
+#... etc
+
+#here put all your oauth tokens
+team1Token = ""
+team2Token = ""
+#... etc
+
+$tokenMap = { team1Verify => team1Token, team2Verify => team2Token } #... etc
+
+#here put your table names from your karma db (1 table per team)
+$tableMap = { team1Verify => '', team2Verify => '' } #... etc

@@ -106,7 +106,7 @@ post '/message' do
     return
   end
 
-  $dbh = DBI.connect("DBI:Mysql:karma:localhost","arubinoff", $dbtoken)
+  $dbh = DBI.connect("DBI:Mysql:#{$dbName}:localhost", $dbUser, $dbtoken)
   $tablename = $tableMap[verificationToken]
 
   channel = req["event"]["channel"]
