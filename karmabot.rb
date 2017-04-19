@@ -26,7 +26,8 @@ def fetchKarmaFromDB(text)
   end
 end
 
-def adjustKarmaInDB(text,amt)
+def adjustKarmaInDB(text,amt)  
+  print("Updating #{text} by #{amt}")
   row = fetchRowFromDB(text)
   if(row.nil?)
      sth = $dbh.prepare( "INSERT INTO `#{$tablename}`(thing,points) VALUES (?, ?);" )
@@ -39,17 +40,18 @@ def adjustKarmaInDB(text,amt)
 end
 
 def sendMessage(text, channel)
-    uri = URI('https://slack.com/api/chat.postMessage')
-    params = { :token => $token, :channel => channel, :text => text }
-    uri.query = URI.encode_www_form(params)
+  print("Sending: #{text}")
+  uri = URI('https://slack.com/api/chat.postMessage')
+  params = { :token => $token, :channel => channel, :text => text }
+  uri.query = URI.encode_www_form(params)
 
-    https = Net::HTTP.new(uri.host,uri.port)
-    https.use_ssl = true
-    req = Net::HTTP::Post.new(uri.path+'?'+uri.query)
-    res = https.request(req)
+  https = Net::HTTP.new(uri.host,uri.port)
+  https.use_ssl = true
+  req = Net::HTTP::Post.new(uri.path+'?'+uri.query)
+  res = https.request(req)
 end
 
-def handleChange(text,channel)
+def handleChange(text,channel,user)
   regexp = /(([^()\-+\s]+)|\(([^)]+)\))(\+\+|--)/
   matches = text.scan(regexp)
 
@@ -60,8 +62,14 @@ def handleChange(text,channel)
   matches.each do |match|
     amt = (match[3]=='++' ? 1 : match[3]=='--' ? -1 : 0)
     thing = match[1] ? match[1] : match[2]
+    thing = getUserFromID(thing)
     if (amt && thing)
-      adjustKarmaInDB(thing,amt)
+      if (thing == user)
+        sendMessage("#{user}-- for attempting to modify own karma",channel)
+        adjustKarmaInDB(user,-1)
+      else
+        adjustKarmaInDB(thing,amt)
+      end
     end
   end
 
@@ -79,7 +87,7 @@ def handleFetch(text,channel)
       next
     end
     word = m[1] ? m[1] : m[2]
-    karma = fetchKarmaFromDB(word)
+    karma = fetchKarmaFromDB(getUserFromID(word))
     str += "#{word} has #{karma} karma. "
   end
   
@@ -91,6 +99,27 @@ def handleFetch(text,channel)
   return false  
 end
 
+def getUserFromID(id)
+  puts "id: #{id}"
+  regexMatch = /U[A-Z0-9]+/.match(id)
+  if(regexMatch && regexMatch[0])
+    id = regexMatch[0]
+  end
+  puts "fetching user for #{id}"
+  uri = URI('https://slack.com/api/users.info')
+  params = { :token => $token, :user => id }
+  uri.query = URI.encode_www_form(params)
+
+  https = Net::HTTP.new(uri.host,uri.port)
+  https.use_ssl = true
+  req = Net::HTTP::Post.new(uri.path+'?'+uri.query)
+  res = JSON.parse(https.request(req).body)
+  if(!res["ok"])
+    return id
+  end
+  puts "returning #{res["user"]["name"]}"
+  return res["user"]["name"]
+end
 
 post '/message' do 
   req = JSON.parse(request.body.read)
@@ -111,11 +140,12 @@ post '/message' do
 
   channel = req["event"]["channel"]
   text = req["event"]["text"]
+  user = getUserFromID(req["event"]["user"])
 
   fetched = handleFetch(text,channel)
   if (!fetched) 
     #don't adjust karma inside a fetch
-    handleChange(text,channel)
+    handleChange(text,channel,user)
   end
 
   $dbh.disconnect()
