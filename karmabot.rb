@@ -76,16 +76,22 @@ def handleChange(text,channel,user)
   return true
 end
 
-def handleFetch(text,channel)
-  if(!text.start_with?("!karma "))
+def handleFetch(text,channel,user)
+  puts "checking karma for '#{text}'"
+  if(!text.match(/!karma\b/))
     return false
+  end
+  #chop off the '!karma'
+  text = text[7..text.length]
+  puts "after chopping text is '#{text}'"
+  if(!text || text.match(/^\s*$/))
+    puts "blank input - replacing with username (#{user})"
+    text = user
   end
   regexp = /(([^()\-+\s]+)|\(([^)]+)\))/
   str = ""
   text.scan(regexp).each_with_index do |m,i|
-    if(i==0)
-      next
-    end
+    puts i
     word = m[1] ? m[1] : m[2]
     karma = fetchKarmaFromDB(getUserFromID(word))
     str += "#{word} has #{karma} karma. "
@@ -104,7 +110,10 @@ def getUserFromID(id)
   regexMatch = /U[A-Z0-9]+/.match(id)
   if(regexMatch && regexMatch[0])
     id = regexMatch[0]
-  end
+  else
+    puts "not a valid UID"
+    return id
+  end   
   puts "fetching user for #{id}"
   uri = URI('https://slack.com/api/users.info')
   params = { :token => $token, :user => id }
@@ -142,7 +151,7 @@ post '/message' do
   text = req["event"]["text"]
   user = getUserFromID(req["event"]["user"])
 
-  fetched = handleFetch(text,channel)
+  fetched = handleFetch(text,channel,user)
   if (!fetched) 
     #don't adjust karma inside a fetch
     handleChange(text,channel,user)
