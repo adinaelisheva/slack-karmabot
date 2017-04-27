@@ -21,7 +21,7 @@ Not valid and won't do anything:
 ```
 
 #### Fetching scores
-To find out scores, just send the message `!karma` followed by any number of words or phrases in parentheses.
+To find out scores, just send the message `!karma` followed by any number of words or phrases in parentheses. `!karma` on its own will report the messager's karma.
 
 ![score fetching example](pics/example.png)
 
