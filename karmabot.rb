@@ -160,3 +160,24 @@ post '/message' do
   $dbh.disconnect()
 
 end
+
+#getter for all karma used by the HTML page (and maybe others)
+get '/allKarma/:table' do |tablename|
+  dbh = DBI.connect("DBI:Mysql:#{$dbName}:localhost", $dbUser, $dbtoken)
+  sth = dbh.prepare( "SELECT thing,points FROM `#{tablename}` ORDER BY points DESC;" )
+  sth.execute()
+  start = true
+  ret = '{'
+  sth.fetch do |row|
+    if start
+      start = false
+    else
+      ret += ','
+    end
+    thing = "#{row['thing']}".force_encoding('utf-8').gsub('"','&quot;')
+    ret += "\"#{thing}\":#{row['points']}"
+  end
+  ret += '}'
+  dbh.disconnect()
+  ret
+end
