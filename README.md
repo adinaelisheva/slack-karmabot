@@ -30,8 +30,7 @@ To find out scores, just send the message `!karma` followed by any number of wor
 #### Prerequisites
 1. Your own box
 2. Ruby
-3. [Sinatra](http://www.sinatrarb.com/)
-4. [Ruby MySQL DBI](http://ruby-dbi.rubyforge.org/)
+3. A MySQL database
 
 #### What to do
 1. Fork this repo to your server. The main files you need are:
@@ -46,4 +45,6 @@ To find out scores, just send the message `!karma` followed by any number of wor
    1. `thing` a text field
    2. `points` an int
 6. Create a `tokens.rb` file that contains your db table names and app authentication tokens (copy tokens.rb.SAMPLE)
-7. Restart your sinatra server and you're good to go!
+7. Install Bundler: `gem install bundler`
+8. Install dependencies: `bundle install --deployment` (to develop, run `bundle install --path=vendor/bundle` instead)
+9. Run the server: `bundle exec rackup -p$PORT -o$HOST config.ru` and you're good to go!

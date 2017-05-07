@@ -1,0 +1,31 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    dbd-mysql (0.4.4)
+      dbi (>= 0.4.0)
+      mysql
+    dbi (0.4.5)
+      deprecated (= 2.0.1)
+    deprecated (2.0.1)
+    mustermann (1.0.0)
+    mysql (2.9.1)
+    rack (2.0.1)
+    rack-protection (2.0.0)
+      rack
+    sinatra (2.0.0)
+      mustermann (~> 1.0)
+      rack (~> 2.0)
+      rack-protection (= 2.0.0)
+      tilt (~> 2.0)
+    tilt (2.0.7)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  dbd-mysql (~> 0.4.4)!
+  dbi (~> 0.4.5)!
+  sinatra (~> 2.0)!
+
+BUNDLED WITH
+   1.14.4
