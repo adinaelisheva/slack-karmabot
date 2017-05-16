@@ -164,7 +164,7 @@ end
 #getter for all karma used by the HTML page (and maybe others)
 get '/allKarma/:table' do |tablename|
   dbh = DBI.connect("DBI:Mysql:#{$dbName}:localhost", $dbUser, $dbtoken)
-  sth = dbh.prepare( "SELECT thing,points FROM `#{tablename}` ORDER BY points DESC;" )
+  sth = dbh.prepare( "SELECT thing,points FROM `#{tablename}` ORDER BY points DESC, thing ASC;" )
   sth.execute()
   start = true
   ret = '{'
