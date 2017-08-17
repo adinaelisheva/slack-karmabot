@@ -167,7 +167,7 @@ get '/allKarma/:table' do |tablename|
   sth = dbh.prepare( "SELECT thing,points FROM `#{tablename}` ORDER BY points DESC, thing ASC;" )
   sth.execute()
   start = true
-  ret = '{'
+  ret = '['
   sth.fetch do |row|
     if start
       start = false
@@ -175,9 +175,9 @@ get '/allKarma/:table' do |tablename|
       ret += ','
     end
     thing = "#{row['thing']}".force_encoding('utf-8').gsub('"','&quot;')
-    ret += "\"#{thing}\":#{row['points']}"
+    ret += "[\"#{thing}\",#{row['points']}]"
   end
-  ret += '}'
+  ret += ']'
   dbh.disconnect()
   ret
 end
