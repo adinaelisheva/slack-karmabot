@@ -78,7 +78,7 @@ end
 
 def handleFetch(text,channel,user)
   puts "checking karma for '#{text}'"
-  if(!text.match(/!karma\b/))
+  if(!text.match(/^!karma\b/))
     return false
   end
   #chop off the '!karma'
