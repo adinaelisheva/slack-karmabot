@@ -62,7 +62,7 @@ def handleChange(text,channel,user)
   matches.each do |match|
     amt = (match[3]=='++' ? 1 : match[3]=='--' ? -1 : 0)
     thing = match[1] ? match[1] : match[2]
-    thing = getUserFromID(thing)
+    thing = replaceUIDWithUname(thing)
     if (amt && thing)
       if (thing == user)
         sendMessage("#{user}-- for attempting to modify own karma",channel)
@@ -93,7 +93,7 @@ def handleFetch(text,channel,user)
   text.scan(regexp).each_with_index do |m,i|
     puts i
     word = m[1] ? m[1] : m[2]
-    karma = fetchKarmaFromDB(getUserFromID(word))
+    karma = fetchKarmaFromDB(replaceUIDWithUname(word))
     str += "#{word} has #{karma} karma. "
   end
   
@@ -105,14 +105,15 @@ def handleFetch(text,channel,user)
   return false  
 end
 
-def getUserFromID(id)
-  puts "id: #{id}"
-  regexMatch = /U[A-Z0-9]+/.match(id)
+def replaceUIDWithUname(strWithUID)
+  uidRegex = /U[A-Z0-9]+/
+  puts "strWithUID: #{strWithUID}"
+  regexMatch = uidRegex.match(strWithUID)
   if(regexMatch && regexMatch[0])
     id = regexMatch[0]
   else
-    puts "not a valid UID"
-    return id
+    puts "no valid UID found"
+    return strWithUID
   end   
   puts "fetching user for #{id}"
   uri = URI('https://slack.com/api/users.info')
@@ -124,10 +125,12 @@ def getUserFromID(id)
   req = Net::HTTP::Post.new(uri.path+'?'+uri.query)
   res = JSON.parse(https.request(req).body)
   if(!res["ok"])
-    return id
+    return strWithUID
   end
-  puts "returning #{res["user"]["name"]}"
-  return res["user"]["name"]
+  username = res["user"]["name"]
+  ret = strWithUID.gsub(uidRegex, username)
+  puts "returning #{ret}"
+  return ret
 end
 
 post '/message' do 
@@ -149,7 +152,7 @@ post '/message' do
 
   channel = req["event"]["channel"]
   text = req["event"]["text"]
-  user = getUserFromID(req["event"]["user"])
+  user = replaceUIDWithUname(req["event"]["user"])
 
   fetched = handleFetch(text,channel,user)
   if (!fetched) 
