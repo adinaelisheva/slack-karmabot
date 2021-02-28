@@ -1,42 +1,51 @@
 #!/usr/bin/env ruby
 # encoding: UTF-8
+require 'mysql2'
 require 'rubygems' # for ruby 1.8
 require 'sinatra'
 require 'json'
 require 'net/http'
-require 'dbi'
 require './tokens'
 
-$dbh = nil
+set :port, 9999
+set :bind, '0.0.0.0'
+
 $token = nil
 $tablename = nil
+$client = nil
 
 def fetchRowFromDB(text)
-  sth = $dbh.prepare("SELECT points FROM `#{$tablename}` WHERE thing = ?;")
-  sth.execute(text)
-  return sth.fetch() 
+  statement = $client.prepare("SELECT points FROM `#{$tablename}` WHERE thing = ?;")
+  return statement.execute(text)
 end
 
 def fetchKarmaFromDB(text)
-  row = fetchRowFromDB(text)
-  if(row.nil?)
-    return 0
-  else
+  puts "fetching karma from db for #{text}"
+  res = fetchRowFromDB(text)
+  res.each do |row|
+    # there should only be 1 row
     return row['points']
   end
+  return 0
 end
 
 def adjustKarmaInDB(text,amt)  
-  print("Updating #{text} by #{amt}")
-  row = fetchRowFromDB(text)
-  if(row.nil?)
-     sth = $dbh.prepare( "INSERT INTO `#{$tablename}`(thing,points) VALUES (?, ?);" )
-     sth.execute(text,amt)
-  else
-     sth = $dbh.prepare("UPDATE `#{$tablename}` SET points = ? WHERE thing = ?;")
-     newpoints = row['points'] + amt
-     sth.execute(newpoints,text)
+  puts "Updating #{text} by #{amt}"
+  res = fetchRowFromDB(text)
+  res.each do |row|
+    # there should be only one row
+    puts "found entry for #{text}, updating"
+    newpoints = row['points'] + amt
+    statement = $client.prepare("UPDATE `#{$tablename}` SET points = ? WHERE thing = ?;");
+    statement.execute(newpoints, text)
+    return
   end
+
+  #if we got here, there was no row - make one
+  puts "no entry for #{thing}, creating one"
+  statement = $client.prepare("INSERT INTO `#{$tablename}`(thing,points) VALUES (?, ?);")
+  statement.execute(text, amt)
+
 end
 
 def sendMessage(text, channel)
@@ -66,9 +75,9 @@ def handleChange(text,channel,user)
     if (amt && thing)
       if (thing == user)
         sendMessage("#{user}-- for attempting to modify own karma",channel)
-        adjustKarmaInDB(user,-1)
+        adjustKarmaInDB(user, -1)
       else
-        adjustKarmaInDB(thing,amt)
+        adjustKarmaInDB(thing, amt)
       end
     end
   end
@@ -91,7 +100,7 @@ def handleFetch(text,channel,user)
   regexp = /(([^()\-+\s]+)|\(([^)]+)\))/
   str = ""
   text.scan(regexp).each_with_index do |m,i|
-    puts i
+    puts "checking karma for #{i}th item in command"
     word = m[1] ? m[1] : m[2]
     karma = fetchKarmaFromDB(replaceUIDWithUname(word))
     str += "#{word} has #{karma} karma. "
@@ -106,6 +115,7 @@ def handleFetch(text,channel,user)
 end
 
 def replaceUIDWithUname(strWithUID)
+  # to fetch the username from the slack api, just send the UXXXX id
   uidRegex = /U[A-Z0-9]+/
   puts "strWithUID: #{strWithUID}"
   regexMatch = uidRegex.match(strWithUID)
@@ -114,7 +124,7 @@ def replaceUIDWithUname(strWithUID)
   else
     puts "no valid UID found"
     return strWithUID
-  end   
+  end
   puts "fetching user for #{id}"
   uri = URI('https://slack.com/api/users.info')
   params = { :token => $token, :user => id }
@@ -128,7 +138,9 @@ def replaceUIDWithUname(strWithUID)
     return strWithUID
   end
   username = res["user"]["name"]
-  ret = strWithUID.gsub(uidRegex, username)
+  # for replacing, the regex supports plain UXXX and <@UXXXX> style ids
+  fullUidRegex = /(<@)?U[A-Z0-9]+>?/ 
+  ret = strWithUID.gsub(fullUidRegex, username)
   puts "returning #{ret}"
   return ret
 end
@@ -147,7 +159,7 @@ post '/message' do
     return
   end
 
-  $dbh = DBI.connect("DBI:Mysql:#{$dbName}:localhost", $dbUser, $dbtoken)
+  $client = Mysql2::Client.new(host: "localhost", username: $dbUser, password: $dbToken, database: $dbName)
   $tablename = $tableMap[verificationToken]
 
   channel = req["event"]["channel"]
@@ -160,18 +172,16 @@ post '/message' do
     handleChange(text,channel,user)
   end
 
-  $dbh.disconnect()
-
 end
 
 #getter for all karma used by the HTML page (and maybe others)
 get '/allKarma/:table' do |tablename|
-  dbh = DBI.connect("DBI:Mysql:#{$dbName}:localhost", $dbUser, $dbtoken)
-  sth = dbh.prepare( "SELECT thing,points FROM `#{tablename}` ORDER BY points DESC, thing ASC;" )
-  sth.execute()
+  client = Mysql2::Client.new(host: "localhost", username: $dbUser, password: $dbToken, database: $dbName)
+  statement = client.prepare("SELECT thing,points FROM `#{tablename}` ORDER BY points DESC, thing ASC;");
+  results = statement.execute();
   start = true
   ret = '['
-  sth.fetch do |row|
+  results.each do |row|
     if start
       start = false
     else
@@ -181,6 +191,9 @@ get '/allKarma/:table' do |tablename|
     ret += "[\"#{thing}\",#{row['points']}]"
   end
   ret += ']'
-  dbh.disconnect()
   ret
+end
+
+get '/' do
+  File.read(File.join('public', 'index.html'))
 end
