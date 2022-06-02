@@ -7,15 +7,17 @@ GEM
     dbi (0.4.5)
       deprecated (= 2.0.1)
     deprecated (2.0.1)
-    mustermann (1.0.3)
+    mustermann (1.1.1)
+      ruby2_keywords (~> 0.0.1)
     mysql (2.9.1)
     rack (2.2.3.1)
-    rack-protection (2.0.2)
+    rack-protection (2.2.0)
       rack
-    sinatra (2.0.2)
+    ruby2_keywords (0.0.5)
+    sinatra (2.2.0)
       mustermann (~> 1.0)
-      rack (~> 2.0)
-      rack-protection (= 2.0.2)
+      rack (~> 2.2)
+      rack-protection (= 2.2.0)
       tilt (~> 2.0)
     tilt (2.0.10)
 
@@ -25,7 +27,7 @@ PLATFORMS
 DEPENDENCIES
   dbd-mysql (~> 0.4.4)!
   dbi (~> 0.4.5)!
-  sinatra (~> 2.0)!
+  sinatra (~> 2.2)!
 
 BUNDLED WITH
    1.14.4
