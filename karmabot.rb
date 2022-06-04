@@ -42,7 +42,7 @@ def adjustKarmaInDB(text,amt)
   end
 
   #if we got here, there was no row - make one
-  puts "no entry for #{thing}, creating one"
+  puts "no entry for #{text}, creating one"
   statement = $client.prepare("INSERT INTO `#{$tablename}`(thing,points) VALUES (?, ?);")
   statement.execute(text, amt)
 
