@@ -88,11 +88,13 @@ end
 def doKarma(text,channel,user)
   puts "checking karma for '#{text}'"
 
-  if(text.match(/^!karma\b/))
-    #chop off the '!karma'
-    text = text[7..text.length]
-    puts "after chopping text is '#{text}'"
+  if(!text.match(/^!karma\b/))
+    return false
   end
+
+  #chop off the '!karma'
+  text = text[7..text.length]
+  puts "after chopping text is '#{text}'"
 
   if(!text || text.match(/^\s*$/))
     puts "blank input - replacing with username (#{user})"
