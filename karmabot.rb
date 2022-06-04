@@ -125,7 +125,7 @@ def doTop(text,channel,user)
     count = m[:count].to_int
   end
 
-  sth = $client.prepare("SELECT thing,points FROM `#{tablename}` ORDER BY points DESC, thing ASC LIMIT #{count};")
+  sth = $client.prepare("SELECT thing,points FROM `#{$tablename}` ORDER BY points DESC, thing ASC LIMIT #{count};")
   sth.execute()
   str = ""
   rank = 1
@@ -151,7 +151,7 @@ def doBottom(text,channel,user)
     count = m[:count].to_int
   end
 
-  sth = $client.prepare("SELECT thing,points FROM `#{tablename}` ORDER BY points ASC, thing ASC LIMIT #{count};")
+  sth = $client.prepare("SELECT thing,points FROM `#{$tablename}` ORDER BY points ASC, thing ASC LIMIT #{count};")
   sth.execute()
   str = ""
   rank = 1
