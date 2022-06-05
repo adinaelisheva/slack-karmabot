@@ -129,10 +129,9 @@ def doTop(text,channel,user)
   results = sth.execute()
 
   str = ""
-  rank = 1
-  results.each do |row|
+  results.each_with_index do |row, rank|
     thing = "#{row['thing']}".force_encoding('utf-8').gsub('"','&quot;')
-    str += "#{rank}. \"#{thing}\" (#{row['points']}) "
+    str += "#{rank + 1}. \"#{thing}\" (#{row['points']}) "
   end
 
   if(str != "")
@@ -154,10 +153,9 @@ def doBottom(text,channel,user)
   sth = $client.prepare("SELECT thing,points FROM `#{$tablename}` ORDER BY points ASC, thing ASC LIMIT #{count};")
   results = sth.execute()
   str = ""
-  rank = 1
-  results.each do |row|
+  results.each_with_index do |row, rank|
     thing = "#{row['thing']}".force_encoding('utf-8').gsub('"','&quot;')
-    str += "#{rank}. \"#{thing}\" (#{row['points']}) "
+    str += "#{rank + 1}. \"#{thing}\" (#{row['points']}) "
   end
 
   if(str != "")
