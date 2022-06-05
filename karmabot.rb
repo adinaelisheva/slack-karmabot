@@ -120,20 +120,20 @@ end
 def doTop(text,channel,user)
   puts "getting top karma for '#{text}'"
   count = 3
-  m = text.match(/^top(?<count>\d+)/)
+  m = text.match(/^!top(?<count>\d+)/)
   if (m)
-    count = m[:count].to_int
+    count = m[:count].to_i
   end
 
   sth = $client.prepare("SELECT thing,points FROM `#{$tablename}` ORDER BY points DESC, thing ASC LIMIT #{count};")
-  sth.execute()
+  results = sth.execute()
+
   str = ""
   rank = 1
-  sth.fetch do |row|
+  results.each do |row|
     thing = "#{row['thing']}".force_encoding('utf-8').gsub('"','&quot;')
     str += "#{rank}. \"#{thing}\" (#{row['points']}) "
   end
-  dbh.disconnect()
 
   if(str != "")
     sendMessage(str,channel)
@@ -146,20 +146,19 @@ end
 def doBottom(text,channel,user)
   puts "getting bottom karma for '#{text}'"
   count = 3
-  m = text.match(/^bottom(?<count>\d+)/)
+  m = text.match(/^!bottom(?<count>\d+)/)
   if (m)
-    count = m[:count].to_int
+    count = m[:count].to_i
   end
 
   sth = $client.prepare("SELECT thing,points FROM `#{$tablename}` ORDER BY points ASC, thing ASC LIMIT #{count};")
-  sth.execute()
+  results = sth.execute()
   str = ""
   rank = 1
-  sth.fetch do |row|
+  results.each do |row|
     thing = "#{row['thing']}".force_encoding('utf-8').gsub('"','&quot;')
     str += "#{rank}. \"#{thing}\" (#{row['points']}) "
   end
-  dbh.disconnect()
 
   if(str != "")
     sendMessage(str,channel)
