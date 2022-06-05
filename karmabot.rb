@@ -85,14 +85,17 @@ def handleChange(text,channel,user)
   return true
 end
 
-def handleFetch(text,channel,user)
+def doKarma(text,channel,user)
   puts "checking karma for '#{text}'"
+
   if(!text.match(/^!karma\b/))
     return false
   end
+
   #chop off the '!karma'
   text = text[7..text.length]
   puts "after chopping text is '#{text}'"
+
   if(!text || text.match(/^\s*$/))
     puts "blank input - replacing with username (#{user})"
     text = user
@@ -105,13 +108,74 @@ def handleFetch(text,channel,user)
     karma = fetchKarmaFromDB(replaceUIDWithUname(word))
     str += "#{word} has #{karma} karma. "
   end
-  
+
   if(str != "")
     sendMessage(str,channel)
     return true
   end
 
-  return false  
+  return false
+end
+
+def doTop(text,channel,user)
+  puts "getting top karma for '#{text}'"
+  count = 3
+  m = text.match(/^!top(?<count>\d+)/)
+  if (m)
+    count = m[:count].to_i
+  end
+
+  sth = $client.prepare("SELECT thing,points FROM `#{$tablename}` ORDER BY points DESC, thing ASC LIMIT #{count};")
+  results = sth.execute()
+
+  str = ""
+  results.each_with_index do |row, rank|
+    thing = "#{row['thing']}".force_encoding('utf-8').gsub('"','&quot;')
+    str += "#{rank + 1}. \"#{thing}\" (#{row['points']}) "
+  end
+
+  if(str != "")
+    sendMessage(str,channel)
+    return true
+  end
+
+  return false
+end
+
+def doBottom(text,channel,user)
+  puts "getting bottom karma for '#{text}'"
+  count = 3
+  m = text.match(/^!bottom(?<count>\d+)/)
+  if (m)
+    count = m[:count].to_i
+  end
+
+  sth = $client.prepare("SELECT thing,points FROM `#{$tablename}` ORDER BY points ASC, thing ASC LIMIT #{count};")
+  results = sth.execute()
+  str = ""
+  results.each_with_index do |row, rank|
+    thing = "#{row['thing']}".force_encoding('utf-8').gsub('"','&quot;')
+    str += "#{rank + 1}. \"#{thing}\" (#{row['points']}) "
+  end
+
+  if(str != "")
+    sendMessage(str,channel)
+    return true
+  end
+
+  return false
+end
+
+def handleFetch(text,channel,user)
+  if(text.match(/^!karma\b/))
+    return doKarma(text,channel,user)
+  elsif(text.match(/^!top/))
+    return doTop(text,channel,user)
+  elsif(text.match(/^!bottom/))
+    return doBottom(text,channel,user)
+  else
+    return false
+  end
 end
 
 def replaceUIDWithUname(strWithUID)

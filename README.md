@@ -25,6 +25,12 @@ To find out scores, just send the message `!karma` followed by any number of wor
 
 ![score fetching example](pics/example.png)
 
+#### Fetching Top Scores
+You can list the top N scores by sending the message `!top[N]`. If provided, N must be a positive integer. If not provided, N defaults to 3.
+
+#### Fetching Bottom Scores
+You can list the bottom N scores by sending the message `!bottom[N]`. If provided, N must be a positive integer. If not provided, N defaults to 3.
+
 ### Setting it up on your own server
 
 #### Prerequisites
