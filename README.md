@@ -21,15 +21,28 @@ Not valid and won't do anything:
 ```
 
 #### Fetching scores
-To find out scores, just send the message `!karma` followed by any number of words or phrases in parentheses. `!karma` on its own will report the messager's karma.
+To find out scores, just send the bot any number of words or phrases in parentheses.
+
+_**Slack**_
+
+Send the message `!karma` followed by the item(s) to be checked.  `!karma` on its own will report the messager's karma.
 
 ![score fetching example](pics/example.png)
 
-#### Fetching Top Scores
-You can list the top N scores by sending the message `!top[N]`. If provided, N must be a positive integer. If not provided, N defaults to 3.
+_**Discord**_
 
-#### Fetching Bottom Scores
-You can list the bottom N scores by sending the message `!bottom[N]`. If provided, N must be a positive integer. If not provided, N defaults to 3.
+Use the `/karma` command and enter the item(s) to be checked as an argument
+
+#### Fetching Top and Bottom Scores
+You can list the top/bottom N scores using the top and bottom messages. These messages support an optional argument of N. If provided, N must be a positive integer. If not provided, N defaults to 3.
+
+_**Slack**_
+
+Send the message `!top[N]` or `!bottom[N]`
+
+_**Discord**_
+
+Use the commands `/karmatop` and `/karmabottom`
 
 ### Setting it up on your own server
 
@@ -40,17 +53,31 @@ You can list the bottom N scores by sending the message `!bottom[N]`. If provide
 
 #### What to do
 1. Fork this repo to your server. The main files you need are:
-   1. The `tmp/` directory and `config.ru` for sinatra
-   2. `karmabot.rb`
-   3. `tokens.rb.SAMPLE` to copy (in step 6)
-2. [Create an app on your slack team(s)](https://api.slack.com/apps) called Karmabot (or whatever you want to call it!)
-3. Set up the app(s) to point to your server
-4. Give your app(s) the following permissions:  
+   
+   a. The `tmp/` directory and `config.ru` for sinatra
+   
+   b. `karmabot.rb`
+   
+   c. `tokens.rb.SAMPLE` to copy (in step 4)
+
+2. Set up the bot on your server
+   
+   a. [Create an app on your slack team(s)](https://api.slack.com/apps) called Karmabot (or whatever you want to call it!)
+   
+   b. Set up the app(s) to point to your server
+   
+   c. Give your app(s) the following permissions:  
 ![channels:history and chat:write:bot](pics/perms.png)
-5. Set up a db with tables for every slack team you're using the app on. The tables should have minimum these two columns:
-   1. `thing` a text field
-   2. `points` an int
-6. Create a `tokens.rb` file that contains your db table names and app authentication tokens (copy tokens.rb.SAMPLE)
-7. Install Bundler: `gem install bundler`
-8. Install dependencies: `bundle install --deployment` (to develop, run `bundle install --path=vendor/bundle` instead)
-9. Run the server: `bundle exec rackup -p$PORT -o$HOST config.ru` and you're good to go!
+   
+   d. Alternately, set up a bot on Discord following their instructions to do so and grab its tokens
+
+3. Set up a db with tables for every slack team you're using the app on. The tables should have minimum these two columns:
+
+   a. `thing`: a text field
+
+   b. `points`: an int
+
+4. Create a `tokens.rb` file that contains your db table names and app authentication tokens (copy tokens.rb.SAMPLE)
+5. Install Bundler: `gem install bundler`
+6. Install dependencies: `bundle install --deployment` (to develop, run `bundle install --path=vendor/bundle` instead)
+7. Run the server: `bundle exec rackup -p$PORT -o$HOST config.ru` and you're good to go!
