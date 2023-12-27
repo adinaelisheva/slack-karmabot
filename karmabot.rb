@@ -6,27 +6,63 @@ require 'sinatra'
 require 'json'
 require 'net/http'
 require './tokens'
+require 'discordrb'
+
+$tablename = nil
+$client = nil
+$curApp = nil
 
 set :port, 9999
 set :bind, '0.0.0.0'
 
 $token = nil
-$tablename = nil
-$client = nil
 
-def fetchRowFromDB(text)
-  statement = $client.prepare("SELECT points FROM `#{$tablename}` WHERE thing = ?;")
-  return statement.execute(text)
+
+########## SHARED ##########
+def doKarma(text)
+  puts "checking karma for '#{text}'"
+  regexp = /(([^()\-+\s]+)|\(([^)]+)\))/
+  str = ""
+  text.scan(regexp).each_with_index do |m,i|
+    puts "checking karma for #{i}th item in command"
+    word = m[1] ? m[1] : m[2]
+    karma = fetchKarmaFromDB(replaceUIDWithUname(word))
+    str += "#{word} has #{karma} karma. "
+  end
+
+  return str
 end
 
-def fetchKarmaFromDB(text)
-  puts "fetching karma from db for #{text}"
-  res = fetchRowFromDB(text)
-  res.each do |row|
-    # there should only be 1 row
-    return row['points']
+def doTop(count)
+  if (!count)
+    count = 3
   end
-  return 0
+  puts "getting top karma for '#{count}'"
+  sth = $client.prepare("SELECT thing,points FROM `#{$tablename}` ORDER BY points DESC, thing ASC LIMIT #{count};")
+  results = sth.execute()
+
+  str = ""
+  results.each_with_index do |row, rank|
+    thing = "#{row['thing']}".force_encoding('utf-8').gsub('"','&quot;')
+    str += "#{rank + 1}. \"#{thing}\" (#{row['points']}) "
+  end
+  return str
+
+end
+
+def doBottom(count)
+  if (!count)
+    count = 3
+  end
+  puts "getting bottom karma for '#{count}'"
+  sth = $client.prepare("SELECT thing,points FROM `#{$tablename}` ORDER BY points ASC, thing ASC LIMIT #{count};")
+  results = sth.execute()
+  str = ""
+  results.each_with_index do |row, rank|
+    thing = "#{row['thing']}".force_encoding('utf-8').gsub('"','&quot;')
+    str += "#{rank + 1}. \"#{thing}\" (#{row['points']}) "
+  end
+  return str
 end
 
 def adjustKarmaInDB(text,amt)  
@@ -47,6 +83,23 @@ def adjustKarmaInDB(text,amt)
   statement.execute(text, amt)
 
 end
+
+def fetchRowFromDB(text)
+  statement = $client.prepare("SELECT points FROM `#{$tablename}` WHERE thing = ?;")
+  return statement.execute(text)
+end
+
+def fetchKarmaFromDB(text)
+  puts "fetching karma from db for #{text}"
+  res = fetchRowFromDB(text)
+  res.each do |row|
+    # there should only be 1 row
+    return row['points']
+  end
+  return 0
+end
+
+########## SLACK ##########
 
 def sendMessage(text, channel)
   print("Sending: #{text}")
@@ -85,7 +138,7 @@ def handleChange(text,channel,user)
   return true
 end
 
-def doKarma(text,channel,user)
+def fetchKarma(text)
   puts "checking karma for '#{text}'"
 
   if(!text.match(/^!karma\b/))
@@ -100,62 +153,38 @@ def doKarma(text,channel,user)
     puts "blank input - replacing with username (#{user})"
     text = user
   end
-  regexp = /(([^()\-+\s]+)|\(([^)]+)\))/
-  str = ""
-  text.scan(regexp).each_with_index do |m,i|
-    puts "checking karma for #{i}th item in command"
-    word = m[1] ? m[1] : m[2]
-    karma = fetchKarmaFromDB(replaceUIDWithUname(word))
-    str += "#{word} has #{karma} karma. "
-  end
-
-  if(str != "")
-    sendMessage(str,channel)
-    return true
-  end
-
-  return false
+  return doKarma(text)
 end
 
-def doTop(text,channel,user)
-  puts "getting top karma for '#{text}'"
+def fetchTop(text)
   count = 3
   m = text.match(/^!top(?<count>\d+)/)
   if (m)
     count = m[:count].to_i
   end
 
-  sth = $client.prepare("SELECT thing,points FROM `#{$tablename}` ORDER BY points DESC, thing ASC LIMIT #{count};")
-  results = sth.execute()
-
-  str = ""
-  results.each_with_index do |row, rank|
-    thing = "#{row['thing']}".force_encoding('utf-8').gsub('"','&quot;')
-    str += "#{rank + 1}. \"#{thing}\" (#{row['points']}) "
-  end
-
-  if(str != "")
-    sendMessage(str,channel)
-    return true
-  end
-
-  return false
+  return doTop(count)
 end
 
-def doBottom(text,channel,user)
-  puts "getting bottom karma for '#{text}'"
+def fetchBottom(text)
   count = 3
   m = text.match(/^!bottom(?<count>\d+)/)
   if (m)
     count = m[:count].to_i
   end
+  return doBottom(count)
+end
 
-  sth = $client.prepare("SELECT thing,points FROM `#{$tablename}` ORDER BY points ASC, thing ASC LIMIT #{count};")
-  results = sth.execute()
+def handleFetch(text,channel,user)
   str = ""
-  results.each_with_index do |row, rank|
-    thing = "#{row['thing']}".force_encoding('utf-8').gsub('"','&quot;')
-    str += "#{rank + 1}. \"#{thing}\" (#{row['points']}) "
+  if(text.match(/^!karma\b/))
+    str = fetchKarma(text)
+  elsif(text.match(/^!top/))
+    str = fetchTop(text)
+  elsif(text.match(/^!bottom/))
+    str = fetchBottom(text)
+  else
+    return false
   end
 
   if(str != "")
@@ -164,18 +193,6 @@ def doBottom(text,channel,user)
   end
 
   return false
-end
-
-def handleFetch(text,channel,user)
-  if(text.match(/^!karma\b/))
-    return doKarma(text,channel,user)
-  elsif(text.match(/^!top/))
-    return doTop(text,channel,user)
-  elsif(text.match(/^!bottom/))
-    return doBottom(text,channel,user)
-  else
-    return false
-  end
 end
 
 def replaceUIDWithUname(strWithUID)
@@ -225,6 +242,7 @@ post '/message' do
 
   $client = Mysql2::Client.new(host: "localhost", username: $dbUser, password: $dbToken, database: $dbName)
   $tablename = $tableMap[verificationToken]
+  $curApp = 'slack'
 
   channel = req["event"]["channel"]
   text = req["event"]["text"]
@@ -261,3 +279,43 @@ end
 get '/' do
   File.read(File.join('public', 'index.html'))
 end
+
+########## DISCORD ##########
+bot = Discordrb::Bot.new(token: $discordToken, intents: [:server_messages])
+
+def initDiscordTable() 
+  if ($curApp != 'discord') 
+    $client = Mysql2::Client.new(host: "localhost", username: $dbUser, password: $dbToken, database: $dbName)
+    $tablename = $discordTableName
+    $curApp = 'discord'
+  end
+end
+
+bot.register_application_command(:karma, 'Check the karma of something', server_id: ENV.fetch($discordServerId, nil)) do |cmd|
+  cmd.string('item', 'item(s) to check', required: true)
+end
+
+bot.register_application_command(:karmatop, 'List the top n karmas (default 3)', server_id: ENV.fetch($discordServerId, nil)) do |cmd|
+  cmd.integer('n', 'top N')
+end
+
+bot.register_application_command(:karmabottom, 'List the bottom n karmas (default 3)', server_id: ENV.fetch($discordServerId, nil)) do |cmd|
+  cmd.integer('n', 'bottom N')
+end
+
+bot.application_command(:karma) do |event|
+  initDiscordTable()
+  event.respond(content: doKarma(event.options['item']))
+end
+
+bot.application_command(:karmatop) do |event|
+  initDiscordTable()
+  event.respond(content: doTop(event.options['n']))
+end
+
+bot.application_command(:karmabottom) do |event|
+  initDiscordTable()
+  event.respond(content: doBottom(event.options['n']))
+end
+
+bot.run

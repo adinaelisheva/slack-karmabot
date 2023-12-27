@@ -5,6 +5,8 @@ $dbName = ""
 $dbUser = ""
 $dbtoken = ""
 
+### FOR SLACK ###
+
 #here put a list of all your app's verification codes, from all the teams you've uploaded it to
 team1Verify = ""
 team2Verify = ""
@@ -19,3 +21,9 @@ $tokenMap = { team1Verify => team1Token, team2Verify => team2Token } #... etc
 
 #here put your table names from your karma db (1 table per team)
 $tableMap = { team1Verify => '', team2Verify => '' } #... etc
+
+#### FOR DISCORD ####
+# For now, this bot only supports one single server
+$discordToken = ""
+$discordTableName = ""
+$discordServerId = ""
