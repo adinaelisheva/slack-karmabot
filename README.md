@@ -1,5 +1,5 @@
 # ![karmabot icon](pics/karma-icon.png) Karmabot
-## An implementation of irc karmabot for slack
+## An implementation of irc karmabot for slack and discord
 
 ### Usage
 #### Basic usage
