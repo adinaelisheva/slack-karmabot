@@ -68,7 +68,7 @@ def doBottom(count)
   return str
 end
 
-def adjustKarmaInDB(text,amt)  
+def adjustKarmaInDB(text,amt)
   puts "Updating #{text} by #{amt}"
   res = fetchRowFromDB(text)
   res.each do |row|
@@ -102,6 +102,33 @@ def fetchKarmaFromDB(text)
   return 0
 end
 
+def updateKarma(text, user, isSlack)
+  regexp = /(([^()\-+\s]+)|\(([^)]+)\))(\+\+|--)/
+  matches = text.scan(regexp)
+
+  if(matches.length == 0)
+    return false
+  end
+
+  matches.each do |match|
+    amt = (match[3]=='++' ? 1 : match[3]=='--' ? -1 : 0)
+    thing = match[1] ? match[1] : match[2]
+    if isSlack
+      thing = replaceUIDWithSlackUname(thing)
+    end
+    if (amt && thing)
+      if (thing == user)
+        adjustKarmaInDB(user, -1)
+        return "#{user}-- for attempting to modify own karma"
+      else
+        adjustKarmaInDB(thing, amt)
+      end
+    end
+  end
+
+  return true
+end
+
 ########## SLACK ##########
 
 def sendMessage(text, channel)
@@ -116,28 +143,11 @@ def sendMessage(text, channel)
   res = https.request(req)
 end
 
-def handleChange(text,channel,user)
-  regexp = /(([^()\-+\s]+)|\(([^)]+)\))(\+\+|--)/
-  matches = text.scan(regexp)
-
-  if(matches.length == 0)
-    return false
+def handleChange(text, channel, user)
+  ret = updateKarma(text, user, true)
+  if (ret)
+    sendMessage(ret,channel)
   end
-
-  matches.each do |match|
-    amt = (match[3]=='++' ? 1 : match[3]=='--' ? -1 : 0)
-    thing = match[1] ? match[1] : match[2]
-    thing = replaceUIDWithSlackUname(thing)
-    if (amt && thing)
-      if (thing == user)
-        sendMessage("#{user}-- for attempting to modify own karma",channel)
-        adjustKarmaInDB(user, -1)
-      else
-        adjustKarmaInDB(thing, amt)
-      end
-    end
-  end
-
   return true
 end
 
@@ -284,7 +294,7 @@ get '/' do
 end
 
 ########## DISCORD ##########
-bot = Discordrb::Bot.new(token: $discordToken, intents: [:server_messages])
+bot = Discordrb::Bot.new(token: $discordToken, intents: :all)
 
 def initDiscordTable() 
   if ($curApp != 'discord') 
@@ -323,6 +333,14 @@ end
 bot.application_command(:bottom) do |event|
   initDiscordTable()
   event.respond(content: doBottom(event.options['n']))
+end
+
+bot.message do |event|
+  initDiscordTable()
+  ret = updateKarma(event.message.content, event.user.username, false)
+  if (ret.instance_of? String)
+    event.respond(ret)
+  end
 end
 
 bot.run
