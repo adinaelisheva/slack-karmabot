@@ -21,17 +21,17 @@ Not valid and won't do anything:
 ```
 
 #### Fetching scores
-To find out scores, just send the bot any number of words or phrases in parentheses.
+To find out scores, just send the bot any number of words or phrases in parentheses. If you don't specify anything to check, it'll return your own karma score.
 
 _**Slack**_
 
-Send the message `!karma` followed by the item(s) to be checked.  `!karma` on its own will report the messager's karma.
+Send the message `!karma` followed by the item(s) to be checked.
 
 ![score fetching example](pics/example.png)
 
 _**Discord**_
 
-Use the `/karma` command and enter the item(s) to be checked as an argument
+Use the `/karma` command and enter the item(s) to be checked as an argument.
 
 #### Fetching Top and Bottom Scores
 You can list the top/bottom N scores using the top and bottom messages. These messages support an optional argument of N. If provided, N must be a positive integer. If not provided, N defaults to 3.
@@ -42,7 +42,7 @@ Send the message `!top[N]` or `!bottom[N]`
 
 _**Discord**_
 
-Use the commands `/karmatop` and `/karmabottom`
+Use the commands `/top` and `/bottom`
 
 ### Setting it up on your own server
 

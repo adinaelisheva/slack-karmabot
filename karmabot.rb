@@ -19,14 +19,17 @@ $token = nil
 
 
 ########## SHARED ##########
-def doKarma(text)
+def doKarma(text, isSlack)
   puts "checking karma for '#{text}'"
   regexp = /(([^()\-+\s]+)|\(([^)]+)\))/
   str = ""
   text.scan(regexp).each_with_index do |m,i|
     puts "checking karma for #{i}th item in command"
     word = m[1] ? m[1] : m[2]
-    karma = fetchKarmaFromDB(replaceUIDWithUname(word))
+    if (isSlack) 
+      word = replaceUIDWithSlackUname(word)
+    end
+    karma = fetchKarmaFromDB(word)
     str += "#{word} has #{karma} karma. "
   end
 
@@ -124,7 +127,7 @@ def handleChange(text,channel,user)
   matches.each do |match|
     amt = (match[3]=='++' ? 1 : match[3]=='--' ? -1 : 0)
     thing = match[1] ? match[1] : match[2]
-    thing = replaceUIDWithUname(thing)
+    thing = replaceUIDWithSlackUname(thing)
     if (amt && thing)
       if (thing == user)
         sendMessage("#{user}-- for attempting to modify own karma",channel)
@@ -153,7 +156,7 @@ def fetchKarma(text)
     puts "blank input - replacing with username (#{user})"
     text = user
   end
-  return doKarma(text)
+  return doKarma(text, true)
 end
 
 def fetchTop(text)
@@ -195,7 +198,7 @@ def handleFetch(text,channel,user)
   return false
 end
 
-def replaceUIDWithUname(strWithUID)
+def replaceUIDWithSlackUname(strWithUID)
   # to fetch the username from the slack api, just send the UXXXX id
   uidRegex = /U[A-Z0-9]+/
   puts "strWithUID: #{strWithUID}"
@@ -246,7 +249,7 @@ post '/message' do
 
   channel = req["event"]["channel"]
   text = req["event"]["text"]
-  user = replaceUIDWithUname(req["event"]["user"])
+  user = replaceUIDWithSlackUname(req["event"]["user"])
 
   fetched = handleFetch(text,channel,user)
   if (!fetched) 
@@ -291,29 +294,33 @@ def initDiscordTable()
   end
 end
 
-bot.register_application_command(:karma, 'Check the karma of something', server_id: ENV.fetch($discordServerId, nil)) do |cmd|
-  cmd.string('item', 'item(s) to check', required: true)
+bot.register_application_command(:karma, 'Check the karma of something (if not specified, will check your karma!)', server_id: ENV.fetch($discordServerId, nil)) do |cmd|
+  cmd.string('item', 'item(s) to check')
 end
 
-bot.register_application_command(:karmatop, 'List the top n karmas (default 3)', server_id: ENV.fetch($discordServerId, nil)) do |cmd|
+bot.register_application_command(:top, 'List the top n karmas (default 3)', server_id: ENV.fetch($discordServerId, nil)) do |cmd|
   cmd.integer('n', 'top N')
 end
 
-bot.register_application_command(:karmabottom, 'List the bottom n karmas (default 3)', server_id: ENV.fetch($discordServerId, nil)) do |cmd|
+bot.register_application_command(:bottom, 'List the bottom n karmas (default 3)', server_id: ENV.fetch($discordServerId, nil)) do |cmd|
   cmd.integer('n', 'bottom N')
 end
 
 bot.application_command(:karma) do |event|
   initDiscordTable()
-  event.respond(content: doKarma(event.options['item']))
+  item = event.options['item']
+  if not item 
+    item = event.user.username
+  end
+  event.respond(content: doKarma(item, false))
 end
 
-bot.application_command(:karmatop) do |event|
+bot.application_command(:top) do |event|
   initDiscordTable()
   event.respond(content: doTop(event.options['n']))
 end
 
-bot.application_command(:karmabottom) do |event|
+bot.application_command(:bottom) do |event|
   initDiscordTable()
   event.respond(content: doBottom(event.options['n']))
 end
