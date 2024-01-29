@@ -17,6 +17,7 @@ set :bind, '0.0.0.0'
 
 $token = nil
 
+$dbLastConnected = 0
 
 ########## SHARED ##########
 def doKarma(text, isSlack)
@@ -297,11 +298,14 @@ end
 bot = Discordrb::Bot.new(token: $discordToken, intents: :all)
 
 def initDiscordTable() 
-  if ($curApp != 'discord') 
+  curtime = Time.now.to_i
+  # Reconnect to the db every 5 minutes
+  if ($curApp != 'discord' or (curtime - $dbLastConnected > 500)) 
     $client = Mysql2::Client.new(host: "localhost", username: $dbUser, password: $dbToken, database: $dbName)
     $tablename = $discordTableName
     $curApp = 'discord'
   end
+  $dbLastConnected = curtime
 end
 
 bot.register_application_command(:karma, 'Check the karma of something (if not specified, will check your karma!)', server_id: ENV.fetch($discordServerId, nil)) do |cmd|
