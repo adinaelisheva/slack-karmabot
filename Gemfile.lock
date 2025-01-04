@@ -1,33 +1,36 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    dbd-mysql (0.4.4)
-      dbi (>= 0.4.0)
-      mysql
-    dbi (0.4.5)
-      deprecated (= 2.0.1)
-    deprecated (2.0.1)
     mustermann (2.0.2)
       ruby2_keywords (~> 0.0.1)
-    mysql (2.9.1)
-    rack (2.2.6.4)
-    rack-protection (2.2.3)
+    mysql2 (0.5.6)
+    nio4r (2.7.4)
+    puma (6.5.0)
+      nio4r (~> 2.0)
+    rack (2.2.10)
+    rack-protection (2.2.4)
       rack
+    rackup (1.0.1)
+      rack (< 3)
+      webrick
     ruby2_keywords (0.0.5)
-    sinatra (2.2.3)
+    sinatra (2.2.4)
       mustermann (~> 2.0)
       rack (~> 2.2)
-      rack-protection (= 2.2.3)
+      rack-protection (= 2.2.4)
       tilt (~> 2.0)
-    tilt (2.0.11)
+    tilt (2.5.0)
+    webrick (1.9.1)
 
 PLATFORMS
   ruby
+  x86_64-linux
 
 DEPENDENCIES
-  dbd-mysql (~> 0.4.4)!
-  dbi (~> 0.4.5)!
-  sinatra (~> 2.2)!
+  mysql2 (~> 0.5.6)
+  puma (~> 6.5)
+  rackup (~> 1.0)
+  sinatra (~> 2.2)
 
 BUNDLED WITH
-   1.14.4
+   2.5.23

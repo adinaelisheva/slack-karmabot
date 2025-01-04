@@ -1,4 +1,3 @@
-#!/usr/bin/env ruby
 # encoding: UTF-8
 require 'mysql2'
 require 'rubygems' # for ruby 1.8
@@ -295,7 +294,7 @@ get '/' do
 end
 
 ########## DISCORD ##########
-bot = Discordrb::Bot.new(token: $discordToken, intents: :all)
+$bot = Discordrb::Bot.new(token: $discordToken, intents: :all)
 
 def initDiscordTable() 
   curtime = Time.now.to_i
@@ -308,19 +307,19 @@ def initDiscordTable()
   $dbLastConnected = curtime
 end
 
-bot.register_application_command(:karma, 'Check the karma of something (if not specified, will check your karma!)', server_id: ENV.fetch($discordServerId, nil)) do |cmd|
+$bot.register_application_command(:karma, 'Check the karma of something (if not specified, will check your karma!)', server_id: ENV.fetch($discordServerId, nil)) do |cmd|
   cmd.string('item', 'item(s) to check')
 end
 
-bot.register_application_command(:top, 'List the top n karmas (default 3)', server_id: ENV.fetch($discordServerId, nil)) do |cmd|
+$bot.register_application_command(:top, 'List the top n karmas (default 3)', server_id: ENV.fetch($discordServerId, nil)) do |cmd|
   cmd.integer('n', 'top N')
 end
 
-bot.register_application_command(:bottom, 'List the bottom n karmas (default 3)', server_id: ENV.fetch($discordServerId, nil)) do |cmd|
+$bot.register_application_command(:bottom, 'List the bottom n karmas (default 3)', server_id: ENV.fetch($discordServerId, nil)) do |cmd|
   cmd.integer('n', 'bottom N')
 end
 
-bot.application_command(:karma) do |event|
+$bot.application_command(:karma) do |event|
   initDiscordTable()
   item = event.options['item']
   if not item 
@@ -329,22 +328,20 @@ bot.application_command(:karma) do |event|
   event.respond(content: doKarma(item, false))
 end
 
-bot.application_command(:top) do |event|
+$bot.application_command(:top) do |event|
   initDiscordTable()
   event.respond(content: doTop(event.options['n']))
 end
 
-bot.application_command(:bottom) do |event|
+$bot.application_command(:bottom) do |event|
   initDiscordTable()
   event.respond(content: doBottom(event.options['n']))
 end
 
-bot.message do |event|
+$bot.message do |event|
   initDiscordTable()
   ret = updateKarma(event.message.content, event.user.username, false)
   if (ret.instance_of? String)
     event.respond(ret)
   end
 end
-
-bot.run
