@@ -26,14 +26,33 @@ def doKarma(text, isSlack)
   text.scan(regexp).each_with_index do |m,i|
     puts "checking karma for #{i}th item in command"
     word = m[1] ? m[1] : m[2]
-    if (isSlack) 
-      word = replaceUIDWithSlackUname(word)
-    end
+    word = canonicalizeText(word, isSlack)
     karma = fetchKarmaFromDB(word)
     str += "#{word} has #{karma} karma. "
   end
 
   return str
+end
+
+def canonicalizeText(text, isSlack)
+  if (isSlack) 
+    text = replaceUIDWithSlackUname(text)
+  end
+  return reduceToCanonicalAlias(text)
+end
+
+def reduceToCanonicalAlias(text)
+  puts "checking aliases for '#{text}'"
+  for list in $aliases do
+    canonicalAlias = list[0]
+    for word in list do
+      if text == word
+        puts "found '#{canonicalAlias}'"
+        return canonicalAlias
+      end
+    end
+  end
+  return text
 end
 
 def doTop(count)
@@ -105,6 +124,7 @@ end
 def updateKarma(text, user, isSlack)
   regexp = /(([^()\-+\s]+)|\(([^)]+)\))(\+\+|--)/
   matches = text.scan(regexp)
+  user = canonicalizeText(user, isSlack)
 
   if(matches.length == 0)
     return false
@@ -113,9 +133,7 @@ def updateKarma(text, user, isSlack)
   matches.each do |match|
     amt = (match[3]=='++' ? 1 : match[3]=='--' ? -1 : 0)
     thing = match[1] ? match[1] : match[2]
-    if isSlack
-      thing = replaceUIDWithSlackUname(thing)
-    end
+    thing = canonicalizeText(thing, isSlack)
     if (amt && thing)
       if (thing == user)
         adjustKarmaInDB(user, -1)
